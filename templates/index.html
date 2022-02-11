@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Lagrange | Kelompok 15</title>
+    <script type="text/javascript" src="app.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+
+  <style>
+    .container {
+      border-radius: 10px;
+      -webkit-box-shadow: 10px 10px 26px 0px rgba(0, 0, 0, 0.21);
+      -moz-box-shadow: 10px 10px 26px 0px rgba(0, 0, 0, 0.21);
+      box-shadow: 10px 10px 26px 0px rgba(0, 0, 0, 0.21);
+    }
+  </style>
+
+  <body onload="load()">
+    <br />
+    <div class="container p-4">
+      <h4 class="pt-4">Masukan file Excell</h4>
+
+      <form method="post" action="/addxls/" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input class="btn btn-light" type="file" name="myfile" />
+        <input
+          class="btn btn-dark"
+          type="submit"
+          name="submit"
+          value="Upload"
+        />
+      </form>
+      <h4 class="pt-4">Atau Masukan Data Tabel</h4>
+
+      <div class="row">
+        <div class="col-lg-6">
+          <div id="myform">
+            <b>Form Input Data Table</b>
+            <form action="">
+              <div class="form-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="x"
+                  placeholder="Input Value X"
+                  name="x"
+                />
+              </div>
+              <div class="form-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="y"
+                  placeholder="Input Value Y"
+                  name="y"
+                />
+              </div>
+              <button
+                type="button"
+                id="add"
+                value="Add"
+                onclick="Javascript:addRow()"
+                class="btn btn-primary"
+              >
+                Add Data
+              </button>
+            </form>
+          </div>
+
+          <div id="mydata">
+            <b>Data Table ...</b>
+            <form action="/" method="POST">
+              {% csrf_token %}
+
+              <table id="myTableData" class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">X</th>
+                    <th scope="col">Y</th>
+                  </tr>
+                  {% for data in table %}
+                  <tr>
+                    <th>
+                      <input
+                        type="button"
+                        class="btn btn-danger"
+                        value="Delete"
+                        onClick="Javacsript:deleteRow(this)"
+                      />
+                    </th>
+                    <th>
+                      <input
+                        type="number"
+                        class="form-control"
+                        value="{{data.xTab}}"
+                        name="x"
+                        step="any"
+                      />
+                    </th>
+                    <th>
+                      <input
+                        type="number"
+                        class="form-control"
+                        value="{{data.fTab}}"
+                        name="y"
+                        step="any"
+                      />
+                    </th>
+                  </tr>
+                  {% endfor %}
+                </thead>
+              </table>
+              <div class="row">
+                <div class="col">
+                  <input
+                    type="number"
+                    placeholder="Input X"
+                    class="form-control"
+                    name="y"
+                    step="any"
+                  />
+                </div>
+                <div class="col">
+                  <input
+                    type="number"
+                    placeholder="Input Orde"
+                    class="form-control"
+                    name="orde"
+                  />
+                </div>
+              </div>
+              <div class="row pt-2">
+                <div class="col">
+                  <input
+                    type="number"
+                    placeholder="Nilai Fungsi"
+                    class="form-control"
+                    name="fungsi"
+                    step="any"
+                  />
+                </div>
+                <div class="col">
+                  <button class="btn btn-success w-100">Submit</button>
+                </div>
+              </div>
+            </form>
+            &nbsp;
+          </div>
+
+          <div class="card mt-2">
+            <div class="card-body">
+              <h5 class="card-title">Credit :</h5>
+              <p class="card-text">Gabriel Ivan Setyaputra | 535180023</p>
+              <p class="card-text">Andre Sumarna | 535180036</p>
+              <p class="card-text">Hendrawan Cahyady | 535180038</p>
+              <p class="card-text">Agus Toni | 535180050</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <b>Lagrange Output</b>
+          <p>{{ message }}</p>
+
+          {% for data in totalArr %}
+          <div class="card mt-2">
+            <div class="card-body">
+              <h5 class="card-title">Orde {{ forloop.counter }}</h5>
+              {% for l in data.L %}
+              <p class="card-text">{{ l }}</p>
+              {% endfor %}
+              <p class="card-text">f(x) : {{data.total}}</p>
+              <p class="card-text">Est. Error : {{data.ea}}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <canvas id="myChart" width="400" height="400"></canvas>
+        </div>
+        <div class="col">
+          <canvas id="myChart2" width="400" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script>
+  var myData = {{totalArr|safe}}
+
+  console.log(myData);
+  const data1 = myData.map((total) => total.total);
+  const data2 = myData.map((total) => total.ea);
+  console.log(data1);
+  var ctx = document.getElementById("myChart").getContext("2d");
+  var ctx2 = document.getElementById("myChart2").getContext("2d");
+  var myChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: Array.from({ length: data1.length }, (x, i) => `orde ` + (i + 1)),
+      datasets: [
+        {
+          label: "# Estimasi Nilai Fungsi",
+          data: data1,
+          backgroundColor: [
+            "rgba(54, 162, 235, 0.2)",
+            "rgba(255, 206, 86, 0.2)",
+            "rgba(75, 192, 192, 0.2)",
+            "rgba(153, 102, 255, 0.2)",
+            "rgba(255, 159, 64, 0.2)",
+          ],
+          borderColor: [
+            "rgba(255, 99, 132, 1)",
+            "rgba(54, 162, 235, 1)",
+            "rgba(255, 206, 86, 1)",
+            "rgba(75, 192, 192, 1)",
+            "rgba(153, 102, 255, 1)",
+            "rgba(255, 159, 64, 1)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      elements: {
+        line: {
+          tension: 0,
+        },
+      },
+    },
+  });
+
+  var myChart2 = new Chart(ctx2, {
+    type: "line",
+    data: {
+      labels: Array.from({ length: data2.length }, (x, i) => `orde ` + (i + 1)),
+      datasets: [
+        {
+          label: "# Estimasi Kesalahan (%)",
+          data: data2,
+          backgroundColor: [
+            "rgba(255, 206, 86, 0.2)",
+            "rgba(75, 192, 192, 0.2)",
+            "rgba(153, 102, 255, 0.2)",
+            "rgba(255, 159, 64, 0.2)",
+          ],
+          borderColor: [
+            "rgba(255, 99, 132, 1)",
+            "rgba(54, 162, 235, 1)",
+            "rgba(255, 206, 86, 1)",
+            "rgba(75, 192, 192, 1)",
+            "rgba(153, 102, 255, 1)",
+            "rgba(255, 159, 64, 1)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      elements: {
+        line: {
+          tension: 0,
+        },
+      },
+    },
+  });
+</script>
+
+<script>
+  function addRow() {
+    var x = document.getElementById("x");
+    var y = document.getElementById("y");
+    var table = document.getElementById("myTableData");
+
+    var rowCount = table.rows.length;
+    var row = table.insertRow(rowCount);
+
+    row.insertCell(0).innerHTML =
+      '<input type="button" class="btn btn-danger" value = "Delete" onClick="Javacsript:deleteRow(this)">';
+    row.insertCell(
+      1
+    ).innerHTML = `<input type='number' class="form-control" step="any" value =${x.value} name="x">`;
+    row.insertCell(
+      2
+    ).innerHTML = `<input type='number' class="form-control" step="any" value =${y.value} name="y">`;
+  }
+
+  function deleteRow(obj) {
+    var index = obj.parentNode.parentNode.rowIndex;
+    var table = document.getElementById("myTableData");
+    table.deleteRow(index);
+  }
+
+  function addTable() {
+    var myTableDiv = document.getElementById("myDynamicTable");
+
+    var table = document.createElement("TABLE");
+    table.border = "1";
+
+    var tableBody = document.createElement("TBODY");
+    table.appendChild(tableBody);
+
+    for (var i = 0; i < 3; i++) {
+      var tr = document.createElement("TR");
+      tableBody.appendChild(tr);
+
+      for (var j = 0; j < 4; j++) {
+        var td = document.createElement("TD");
+        td.appendChild(document.createTextNode("Cell " + i + "," + j));
+        tr.appendChild(td);
+      }
+    }
+    myTableDiv.appendChild(table);
+  }
+
+  function load() {
+    console.log("Page load finished");
+  }
+</script>
